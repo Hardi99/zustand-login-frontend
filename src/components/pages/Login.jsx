@@ -1,30 +1,31 @@
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
-import useAuthStore from "../../store/authStore";
+import { useLogin } from "../../hooks/useAuth";
 
-    const Login = () => {
+const Login = () => {
     const navigate = useNavigate();
-    const login = useAuthStore((state) => state.login);
+    const loginMutation = useLogin();
 
     const {
         register,
         handleSubmit,
-        formState: { errors, isSubmitting },
+        formState: { errors },
     } = useForm({
         defaultValues: {
-        email: "",
-        password: "",
+            email: "",
+            password: "",
         },
     });
 
     const onSubmit = async (data) => {
-        try {
-        await login(data);
-        navigate("/about");
-        } catch (error) {
-        console.log(error.message);
-        alert("Erreur de connexion");
-        }
+        loginMutation.mutate(data, {
+            onSuccess: () => {
+                navigate("/about");
+            },
+            onError: (error) => {
+                alert(error.response?.data?.message || "Erreur de connexion");
+            },
+        });
     };
 
     return (
@@ -72,11 +73,17 @@ import useAuthStore from "../../store/authStore";
                     <button
                     className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-full disabled:opacity-50"
                     type="submit"
-                    disabled={isSubmitting}
+                    disabled={loginMutation.isPending}
                     >
-                    {isSubmitting ? "Connexion..." : "Se connecter"}
+                    {loginMutation.isPending ? "Connexion..." : "Se connecter"}
                     </button>
                 </div>
+
+                {loginMutation.isError && (
+                    <p className="text-red-500 text-sm mt-4 text-center">
+                        {loginMutation.error?.response?.data?.message || "Erreur de connexion"}
+                    </p>
+                )}
 
                 <div className="mt-4 text-center">
                     <p className="text-sm text-gray-600">

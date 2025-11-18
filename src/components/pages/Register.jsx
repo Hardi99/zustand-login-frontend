@@ -1,15 +1,15 @@
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
-import useAuthStore from "../../store/authStore";
+import { useRegister } from "../../hooks/useAuth";
 
 const Register = () => {
     const navigate = useNavigate();
-    const register = useAuthStore((state) => state.register);
+    const registerMutation = useRegister();
 
     const {
         register: registerField,
         handleSubmit,
-        formState: { errors, isSubmitting },
+        formState: { errors },
         watch,
     } = useForm({
         defaultValues: {
@@ -22,13 +22,14 @@ const Register = () => {
     const password = watch("password");
 
     const onSubmit = async (data) => {
-        try {
-            await register(data);
-            navigate("/");
-        } catch (error) {
-            console.log(error.message);
-            alert("Erreur lors de l'inscription");
-        }
+        registerMutation.mutate(data, {
+            onSuccess: () => {
+                navigate("/");
+            },
+            onError: (error) => {
+                alert(error.response?.data?.message || "Erreur lors de l'inscription");
+            },
+        });
     };
 
     return (
@@ -95,11 +96,17 @@ const Register = () => {
                         <button
                             className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-full disabled:opacity-50"
                             type="submit"
-                            disabled={isSubmitting}
+                            disabled={registerMutation.isPending}
                         >
-                            {isSubmitting ? "Inscription..." : "S'inscrire"}
+                            {registerMutation.isPending ? "Inscription..." : "S'inscrire"}
                         </button>
                     </div>
+
+                    {registerMutation.isError && (
+                        <p className="text-red-500 text-sm mt-4 text-center">
+                            {registerMutation.error?.response?.data?.message || "Erreur lors de l'inscription"}
+                        </p>
+                    )}
 
                     <div className="mt-4 text-center">
                         <p className="text-sm text-gray-600">

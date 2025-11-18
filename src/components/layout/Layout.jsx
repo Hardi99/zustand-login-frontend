@@ -1,13 +1,18 @@
 import { Link, Outlet, useNavigate } from "react-router-dom";
 import useAuthStore from "../../store/authStore";
+import { useLogout } from "../../hooks/useAuth";
 
 const Layout = () => {
     const navigate = useNavigate();
-    const { user, logout } = useAuthStore();
+    const user = useAuthStore((state) => state.user);
+    const logoutMutation = useLogout();
 
     const handleLogout = () => {
-        logout();
-        navigate("/login");
+        logoutMutation.mutate(undefined, {
+            onSuccess: () => {
+                navigate("/login");
+            },
+        });
     };
 
     return (
